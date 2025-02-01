@@ -1,0 +1,130 @@
+::-webkit-scrollbar-track {
+    background-color:#2a2a2b85
+}
+::-webkit-scrollbar-thumb {
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+    background-color:#dedfdf;
+    border: #333 1px solid;
+}
+::-webkit-scrollbar-thumb {
+    -webkit-border-radius: 0px;
+    border-radius: 0px;
+    background-color:#adadad;
+}
+::-webkit-scrollbar {
+    width: 5px;
+    height: 8px;
+}
+* {
+    height: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+
+body {
+    padding: 10px;
+    background: rgba(33, 33, 33, .9);
+}
+.root {
+    display: flex;
+    flex-direction: row;
+}
+
+.WorkArea {
+    border-radius: 5px;
+    width: 70%;
+    background: #01010157;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-right: 1rem;
+}
+.Console {
+    position: absolute;
+    top: 0;
+    right: 0;
+    border-radius: 5px;
+    width: 50%;
+    height: 50%;
+    background: #1c1c1c;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.901);
+}
+.ServerConsole {
+    border-radius: 5px;
+    width: 30%;
+    background: #01010157;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+
+#view {
+    width: 50%;
+}
+#noView {
+    width: 50px;
+}
+
+
+/* console */
+.MSG {
+    padding: 1em;
+    border-bottom: 1px rgba(93, 92, 92, 0.523) solid;
+    color: silver;
+    font-size: 16px;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+#error {
+    color: rgba(239, 42, 42, 0.625);
+}
+.consoleMsg {
+    position: relative;
+}
+.btn {
+    position: absolute;
+    height: 30px;
+    width: 40px;
+    right: 0;
+    margin-top: 3px;
+    margin-right: 10px;
+    cursor: pointer;
+    border: 1px rgb(128, 128, 127) solid;
+    border-radius: 4px;
+    background: #69696849;
+    color: rgb(180, 180, 179);
+}
+.btnTooglerView {
+    position: absolute;
+    z-index: 3;
+    height: 30px;
+    width: 40px;
+    left: 0;
+    margin-top: 3px;
+    margin-right: 10px;
+    cursor: pointer;
+    border: 1px rgb(128, 128, 127) solid;
+    border-radius: 4px;
+    background: #69696849;
+    color: rgb(180, 180, 179);
+}
+.preStyle {
+    background: #0c0c0c;
+    display: block;
+    padding: 10px 20px;
+    margin: 0;
+    max-height: 20rem;
+    overflow-y: scroll;
+    color: rgba(106, 209, 80, 0.562);
+    border-bottom: 1px solid gray;
+}
