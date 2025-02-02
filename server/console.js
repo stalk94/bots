@@ -1,12 +1,11 @@
 const fs = require('fs');
-const path = require('path');
 const { convertTime, replaceCircular } = require('../services/function');
 
 
 process.LOGS = [];
 const logStream = fs.createWriteStream('console.log', { flags: 'a' });
 globalThis.log = console.log;
-globalThis.err = console.error;
+globalThis.error = console.error;
 
 
 // лог в файл
@@ -37,5 +36,5 @@ console.error =(...messages)=> {
 
     process.LOGS.push(format);          // в shared log
     logStream.write(format);            // в файл
-    globalThis.err(...messages);        // в базовый console.log
+    globalThis.error(...messages);        // в базовый console.log
 }

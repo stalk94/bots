@@ -10,7 +10,7 @@ export async function send(url: string, data: any, metod: 'GET'|'POST') {
     }
     if(metod!=='GET') dataServer.body = JSON.stringify(data);
 
-    const request = await fetch(window.location.href + url, dataServer);
+    const request = await fetch('http://localhost:3000/' + url, dataServer);
     return request.json();
 }
 
