@@ -58,6 +58,9 @@ async function editGlobalConfig(newConfigData) {
 app.get("/", (req, res)=> {
     res.sendFile(__dirname + '/dist/index.html');
 });
+app.get("/getConfig", (req, res)=> {
+    res.send(globalThis.CONFIG);
+});
 app.post('/chek', (req, res)=> {
     res.send({
         sys: process.LOGS.toString()
@@ -68,7 +71,9 @@ app.post('/botReload', async(req, res)=> {
     await bot.close();
     bot = initBot(newConfigData.TELEGRAM_KEY);
 });
-
+app.post('/editConfig', (req, res)=> {
+    if(req.body) editGlobalConfig(req.body);
+});
 
 
 
