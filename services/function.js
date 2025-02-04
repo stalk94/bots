@@ -115,3 +115,8 @@ exports.downloadFile =async(url)=> {
         });
     });
 }
+
+exports.delay = async(ms)=> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+    

@@ -1,4 +1,5 @@
 const puppeteer = require('puppeteer');
+const { delay } = require('./function');
 const fs = require('fs');
 const path = require('path');
 
@@ -19,32 +20,57 @@ exports.parseCockie = async function() {
         args: [
             '--no-sandbox',                                  // Для избежания ошибок при запуске в некоторых средах
             '--disable-setuid-sandbox',
-            '--disable-blink-features=AutomationControlled'  // Избегаем автоматизации для предотвращения блокировки
+            '--disable-blink-features=AutomationControlled',  // Избегаем автоматизации для предотвращения блокировки
+            '--disable-features=IsolateOrigins,SitePerProcess'
         ]
     });
 
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1280, height: 720 });
-    await page.setExtraHTTPHeaders({'Accept-Language': 'ru-RU,ru;q=0.9'});
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-    await page.goto('https://www.tiktok.com/login/phone-or-email/email', { waitUntil: 'networkidle2' });
+    try{
+        const page = await browser.newPage();
+        await page.setViewport({ width: 1280, height: 720 });
+        await page.setExtraHTTPHeaders({'Accept-Language': 'ru-RU,ru;q=0.9'});
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        await page.goto('https://www.tiktok.com/login/phone-or-email/email', { waitUntil: 'networkidle2' });
+        
+        
+        if(globalThis.CONFIG) {
+            // Вводим учетные данные
+            await page.type('input[name="username"]', CONFIG.tk_login);
+            await page.type('input[type="password"]', CONFIG.tk_password);
+        }
+        else {
+            await page.type('input[name="username"]', 'intimalive@gmail.com');
+            await page.type('input[type="password"]', 'Polina2015_');
+        }
 
-    // Вводим учетные данные
-    await page.type('input[name="username"]', CONFIG.tk_login, { delay: 100 });
-    await page.type('input[type="password"]', CONFIG.tk_password, { delay: 100 });
+        // убираем говно банер
+        await page.evaluate(()=> {
+            const banner = document.querySelector('tiktok-cookie-banner');
+            if(banner && banner.shadowRoot) {
+                const acceptButton = banner.shadowRoot.querySelector('button:last-child');
+                if(acceptButton) acceptButton.click();
+            }
+        });
 
-    // Нажимаем кнопку входа
-    await page.click('button[type="submit"]');
-    await page.waitForNavigation({ waitUntil: 'networkidle2' });
+        // Нажимаем кнопку входа
+        await page.waitForSelector('[data-e2e="login-button"]');
+        await page.click('[data-e2e="login-button"]');
+        await page.waitForNavigation({ waitUntil: 'networkidle2' });
 
-    // Получаем и сохраняем куки
-    const cookies = await browser.cookies();
-    browser.close();
-    fs.writeFileSync(COOCKIE_PATH, JSON.stringify(cookies));
+        // Получаем и сохраняем куки
+        const cookies = await browser.cookies();
+        browser.close();
+        //console.log('COCKIES: ', cookies);
+        fs.writeFileSync(COOCKIE_PATH, JSON.stringify(cookies));
 
-    console.log('COCKIES: ', cookies);
-    return cookies;
+        return cookies;
+    }
+    catch {
+        browser.close();
+        console.error('authorize error');
+    }
 }
+
 
 /**
  * Рабочий ботяра загрузчик в тики таки видео с машинным описанием и спизженным видео
@@ -76,38 +102,74 @@ exports.botLoader = async function(resultMirror, textGpt, caller) {
 
             // Переходим на страницу загрузки видео
             await page.goto('https://www.tiktok.com/upload', { waitUntil: 'networkidle2' });
-            await page.waitForSelector('input[type="file"]');
 
+            // Проверка на случай, если попали на страницу логина
+            const isLoginPage = await page.evaluate(()=> !!document.querySelector('h2[data-e2e="login-title"]'));
+            if(isLoginPage) {
+                await browser.close();
+                cookies = await parseCookie();          // Авторизуем заново
+                if(!cookies) {
+                    caller('❌ Не удалось получить новые куки. Авторизация не удалась.');
+                    return;
+                }
 
+                // Перезапускаем процесс загрузки с новыми куками
+                return exports.botLoader(resultMirror, textGpt, caller);
+            }
+
+            
             if(typeof resultMirror === 'string') {
+                // убираем говно банер
+                await page.evaluate(() => {
+                    const banner = document.querySelector('tiktok-cookie-banner');
+                    if(banner && banner.shadowRoot) {
+                        const acceptButton = banner.shadowRoot.querySelector('button:last-child');
+                        if(acceptButton) acceptButton.click();
+                    }
+                });
+
                 // Загрузить видео
+                await page.waitForSelector('input[type="file"]');
                 const fileInput = await page.$('input[type="file"]');
+
                 if(fileInput) await fileInput.uploadFile(resultMirror);
                 else caller('❌💀 Cбой!!!', 'Сбой. Не найден инпут загрузки видео.');
 
                 // Ждем появления поля для ввода описания
-                await page.waitForSelector('div[contenteditable="true"]');
+                await page.waitForSelector('div[contenteditable="true"]', { visible: true });
                 const descriptionField = await page.$('div[contenteditable="true"]');
                 await descriptionField.click();             // Фокусируемся на поле
-                await page.keyboard.down('Control'); 
+                await delay(200);
+                await page.keyboard.press('Control'); 
                 await page.keyboard.press('A');             // Выделяем весь текст
+                await delay(200);
                 await page.keyboard.press('Backspace');     // Удаляем выделенный текст
-                await page.keyboard.up('Control');
-                await descriptionField.type(textGpt, { delay: 20 }); 
+                await page.keyboard.press('Backspace');
+                await page.keyboard.press('Backspace');
+                await page.keyboard.press('Backspace');
+                await delay(200);
+                await descriptionField.type(textGpt, { delay: 40 }); 
 
-                // Ожидаем прогресса загрузки
-                await page.waitForSelector('.info-progress.success', { visible: true });
+                // Ожидаем прогресса загрузки (!ебаный тик ток может поменять селекторы)
+                await page.waitForSelector('.info-status-item.success-info', { visible: true });
 
                 // Ожидаем кнопку для публикации
-                await page.waitForSelector('[data-e2e="post_video_button"]');
-                const postButton = await page.$('[data-e2e="post_video_button"]');
+                await page.waitForSelector('[data-e2e="post_video_button"]', {visible: true});
+                await page.evaluate(()=> {
+                    document.querySelector('[data-e2e="post_video_button"]')
+                        .scrollIntoView({ behavior: "smooth", block: "center" });
+                });
+                
 
                 // Нажимаем кнопку публикации
-                await postButton.click({ delay: 120 });
+                await page.evaluate(()=> {
+                    document.querySelector('[data-e2e="post_video_button"]').click();
+                });
+                //await page.click('[data-e2e="post_video_button"]', { delay: 100 });
                 caller('🎉 Видео опубликовано. И обрабатывается tik-tok.(3 min bot panding)')
 
                 // ? нужна логика для закрытия puppeter
-                setTimeout(()=> {browser.close(); caller('🤖 Browser bot close');}, 3 * (60*1000));
+                setTimeout(()=> {browser?.close(); caller('🤖 Browser bot close');}, 3 * (60*1000));
             } 
         } 
         catch (error) {
@@ -116,7 +178,7 @@ exports.botLoader = async function(resultMirror, textGpt, caller) {
                 text: '❌💀 Бот словил какое то исключение',
                 error: error
             });
-            await browser.close();
+            await browser?.close();
         } 
     } 
     else {
@@ -125,8 +187,26 @@ exports.botLoader = async function(resultMirror, textGpt, caller) {
             label: 'Coockie error',
             text: 'Нет куки в хранилище!!!'
         });
-        await browser.close();
+        await browser?.close();
     }
+}
+/**
+ * Получает все url видео аккаунта username tik-tok
+ * @param {string} username 
+ * @returns {Promise<string[]>}
+ */
+exports.getTikTokPosts = async (username)=> {
+    const browser = await puppeteer.launch({ headless: true });
+    const page = await browser.newPage();
+    await page.goto(`https://www.tiktok.com/@${username}`);
+  
+    const videos = await page.evaluate(()=> {
+        return Array.from(document.querySelectorAll('a[href*="/video/"]')).map((a)=> a.href);
+    });
+
+
+    await browser.close();
+    return videos;
 }
 
 

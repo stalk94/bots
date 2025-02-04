@@ -17,7 +17,8 @@ globalThis.CONFIG = {
     tk_password: config.tk_password ?? process.env.tk_password,
     textPrompt: config.textPrompt, 
     textCooper: config.textCooper,
-    flickCooper: config.flickCooper
+    flickCooper: config.flickCooper,
+    usernameTikTok: config.usernameTikTok
 }
 //////////////////////////////////////////////////////
 
