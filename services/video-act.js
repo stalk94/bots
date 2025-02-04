@@ -74,12 +74,22 @@ async function miror(copyrightText, flick) {
     }
     if(flick) filter.enable = 'lt(mod(t,2),1)';
 
+    const duration = metaData.format.duration;
+    const newDuration = Math.max(0, duration - 4);
+
 
     return await new Promise((resolve, reject)=> {
         if(!metaData) reject(new Error('video not meta data'));
         else ffmpeg(videoTemp)
+            .setStartTime(2)                                        // Пропускаем первые 2 секунды
+            .setDuration(newDuration)                               // Урезаем последние 4 секунды
             .videoFilters([
-                'hflip',  // Отзеркалить видео по горизонтали
+                'hflip',                                            // Отзеркалить видео по горизонтали
+                'setpts=1.03*PTS',                                  // Ускорение видео на 3%
+                'fps=29.97',                                        // Изменение FPS
+                'noise=alls=10:allf=t+u',                           // Добавление шума
+                'eq=brightness=0.02:saturation=1.1:contrast=1.05',  // Лёгкая цветокоррекция
+                'crop=iw-10:ih-10,scale=iw:ih',                     // Обрезка и восстановление размера
                 filter
             ])
             .output(pathOut)
@@ -94,7 +104,7 @@ async function miror(copyrightText, flick) {
             .run();
         });
 }
-
+miror('test', false).then(console.log)
 
 
 module.exports = {
