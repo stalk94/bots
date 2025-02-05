@@ -119,4 +119,6 @@ exports.downloadFile =async(url)=> {
 exports.delay = async(ms)=> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-    
+exports.getHashtags =(text)=> {
+    return text.match(/#[\p{L}0-9_]+/gu) || [];
+}

@@ -67,9 +67,9 @@ async function miror(copyrightText, flick) {
             fontcolor: 'red',
             x: '(w-text_w)/2',          // По центру по горизонтали
             y: 30,                      // Расположить текст вверху
-            box: 1,                     // Включить фон
-            boxcolor: 'black@0.05',      // Черный фон с прозрачностью (0.7)
-            boxborderw: 7              // Толщина границы фона
+            //box: 1,                     // Включить фон
+            //boxcolor: 'black@0.05',      // Черный фон с прозрачностью (0.7)
+            //boxborderw: 7              // Толщина границы фона
         }
     }
     if(flick) filter.enable = 'lt(mod(t,2),1)';
@@ -86,11 +86,16 @@ async function miror(copyrightText, flick) {
             .videoFilters([
                 'hflip',                                            // Отзеркалить видео по горизонтали
                 'setpts=1.03*PTS',                                  // Ускорение видео на 3%
-                'fps=29.97',                                        // Изменение FPS
+                'fps=29',                                           // Изменение FPS
                 'noise=alls=10:allf=t+u',                           // Добавление шума
                 'eq=brightness=0.02:saturation=1.1:contrast=1.05',  // Лёгкая цветокоррекция
                 'crop=iw-10:ih-10,scale=iw:ih',                     // Обрезка и восстановление размера
                 filter
+            ])
+            .audioFilters([
+                'asetrate=44100*0.98,atempo=1.03',                  // Смена темпа без искажения голоса
+                'afftdn=nr=20',                                     // Легкий шумодав
+                'adelay=500|500'                                    // Сдвиг звука
             ])
             .output(pathOut)
             .on('end', ()=> {
@@ -104,7 +109,7 @@ async function miror(copyrightText, flick) {
             .run();
         });
 }
-miror('test', false).then(console.log)
+//miror('test', false).then(console.log)
 
 
 module.exports = {

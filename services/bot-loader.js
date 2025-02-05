@@ -1,5 +1,5 @@
 const puppeteer = require('puppeteer');
-const { delay } = require('./function');
+const { delay, getHashtags } = require('./function');
 const fs = require('fs');
 const path = require('path');
 
@@ -68,6 +68,60 @@ exports.parseCockie = async function() {
     catch {
         browser.close();
         console.error('authorize error');
+    }
+}
+/**
+ * Проставка хэш тегов в полк ввода описания
+ * @param {puppeteer.Page} page 
+ * @param {puppeteer.ElementHandle<HTMLDivElement>} descriptionField 
+ * @param {string} text 
+ */
+async function typeTextWithHashtags(page, descriptionField, text) { 
+    const hashtags = getHashtags(text);                         // Получаем все хештеги из текста
+    let position = 0;
+
+    for(let hashtag of hashtags) {
+        const hashtagIndex = text.indexOf(hashtag, position);   // Ищем хештег в тексте с текущей позиции
+
+        // Вставляем текст перед хештегом
+        if(hashtagIndex > position) {
+            await descriptionField.type(text.slice(position, hashtagIndex), { delay: 40 });
+        }
+
+        // Вставляем сам хештег
+        await descriptionField.type(hashtag, { delay: 40 });
+
+        // Ждем, пока появится выпадающий список
+        try {
+            await page.waitForSelector('.hashtag-suggestion-item', { visible: true, timeout: 2000 });
+            //console.log('Hash tag suggestion visible');
+
+            // Выбираем первый хештег из выпадающего списка
+            const firstHashtag = await page.$('.hashtag-suggestion-item');
+            if(firstHashtag) {
+                await firstHashtag.click();
+                await delay(400);
+            }
+        } 
+        catch(error) {
+            console.warn(`Не удалось выбрать хештег ${hashtag}: ${error.message}`);
+        }
+
+        // Обновляем позицию для следующего хештега
+        position = hashtagIndex + hashtag.length;
+
+        // Добавляем пробел после хештега (если в тексте он был)
+        if(text[position] === '') {
+            await descriptionField.type(' ', { delay: 40 });
+            position++;
+        }
+
+        await delay(200);  // Небольшая задержка перед следующим хештегом
+    }
+
+    // Вставляем оставшийся текст после последнего хештега
+    if(position < text.length) {
+        await descriptionField.type(text.slice(position), { delay: 40 });
     }
 }
 
@@ -144,14 +198,16 @@ exports.botLoader = async function(resultMirror, textGpt, caller) {
                 await page.keyboard.press('A');             // Выделяем весь текст
                 await delay(200);
                 await page.keyboard.press('Backspace');     // Удаляем выделенный текст
+                await delay(100);
                 await page.keyboard.press('Backspace');
-                await page.keyboard.press('Backspace');
-                await page.keyboard.press('Backspace');
-                await delay(200);
-                await descriptionField.type(textGpt, { delay: 40 }); 
+                await delay(100);
+                await typeTextWithHashtags(page, descriptionField, textGpt.replace(/"/g, ''));
 
                 // Ожидаем прогресса загрузки (!ебаный тик ток может поменять селекторы)
-                await page.waitForSelector('.info-status-item.success-info', { visible: true });
+                await Promise.race([
+                    page.waitForSelector('.info-status.success', { visible: true }),
+                    page.waitForSelector('.info-status-item.success-info', { visible: true })
+                ]);
 
                 // Ожидаем кнопку для публикации
                 await page.waitForSelector('[data-e2e="post_video_button"]', {visible: true});
@@ -159,17 +215,18 @@ exports.botLoader = async function(resultMirror, textGpt, caller) {
                     document.querySelector('[data-e2e="post_video_button"]')
                         .scrollIntoView({ behavior: "smooth", block: "center" });
                 });
-                
 
                 // Нажимаем кнопку публикации
+                //await page.click('[data-e2e="post_video_button"]', { delay: 100 });
                 await page.evaluate(()=> {
                     document.querySelector('[data-e2e="post_video_button"]').click();
                 });
-                //await page.click('[data-e2e="post_video_button"]', { delay: 100 });
-                caller('🎉 Видео опубликовано. И обрабатывается tik-tok.(3 min bot panding)')
+
+                await page.waitForNavigation({ waitUntil: 'networkidle2' });
+                caller('🎉 Видео опубликовано. И обрабатывается tik-tok.');
 
                 // ? нужна логика для закрытия puppeter
-                setTimeout(()=> {browser?.close(); caller('🤖 Browser bot close');}, 3 * (60*1000));
+                setTimeout(()=> {browser?.close(); caller('🤖 Browser process bot close');}, 1 * (60*1000));
             } 
         } 
         catch (error) {
@@ -190,6 +247,10 @@ exports.botLoader = async function(resultMirror, textGpt, caller) {
         await browser?.close();
     }
 }
+//const descriptionHtml = `Погрузитесь в мир случайных интересных встреч с нашим новым видео чат рулетка для взрослых! Откройте для себя новые знакомства и незабываемые общения с людьми со всего мира. 🌎✨ #ВидеоЧат #РулеткаЧат #ВзрослыйЧат #СлучайныеВстречи #ОбщениеПоВсемуМиру #video`;
+//exports.botLoader('services/temp/2.mp4', descriptionHtml, console.log)
+
+
 /**
  * Получает все url видео аккаунта username tik-tok
  * @param {string} username 
