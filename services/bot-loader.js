@@ -71,7 +71,7 @@ exports.parseCockie = async function() {
     }
 }
 /**
- * Проставка хэш тегов в полк ввода описания
+ * Проставка хэш тегов в поле ввода описания
  * @param {puppeteer.Page} page 
  * @param {puppeteer.ElementHandle<HTMLDivElement>} descriptionField 
  * @param {string} text 
