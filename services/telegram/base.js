@@ -9,7 +9,7 @@ const input = require("input");
 
 const apiId = +process.env.TG_API_ID;
 const apiHash = process.env.TG_HASH;
-const testMobailNum = '+380967802355'
+const testMobailNum = process.env.TEST_NUM;
 
 
 async function checkProxy(proxy) {
