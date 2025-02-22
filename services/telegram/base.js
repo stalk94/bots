@@ -175,7 +175,7 @@ class BotInviterBase {
      * @returns {Promise<Api.User[]>} только уникальные 
      */
     async getAllUsersFromGroup(groupName, limit=100) {
-        let group;
+        let group, i=0;
         const result = [];
 
         try {
@@ -187,7 +187,6 @@ class BotInviterBase {
         }
 
         const messages = await this.client.getMessages(group, { limit: limit });
-        
         const chek =(user)=> {
             const find = result.find((elem)=> elem?.id?.valueOf() === user?.id?.valueOf());
 
@@ -195,10 +194,9 @@ class BotInviterBase {
             else return false;
         }
         
-        for (const message of messages) {
+        for (const [index, message] of messages.entries()) {
             const senderUser = message.sender;
             if(!chek(senderUser)) result.push(senderUser);
-            //console.log(message.sender.username);
             
             // только для групп (блок на будуюшее)
             if(message.replyTo) {
@@ -208,21 +206,28 @@ class BotInviterBase {
             // сообшение канала (с коментариями)
             if(message.replies) {
                 if(message.replies && message.replies.replies > 0) {
-                    const replies = await this.client.getMessages(group, {
-                        limit: message.replies.replies,
-                        replyTo: message.id
+                    const delay = Math.floor(Math.random() * 100) + 250;
+                    console.log('iteration: ', i++, ':', index);
+
+                    await new Promise((resolve)=> {
+                        setTimeout(async ()=> {
+                            const replies = await this.client.getMessages(group, {
+                                limit: 100,
+                                replyTo: message.id
+                            });
+                            
+                            for (const replyMessage of replies) {
+                                const user = replyMessage.sender;
+                                if(user && !chek(user)) result.push(user);
+                            }
+
+                            resolve();
+                        }, delay);
                     });
-                    
-                    for (const replyMessage of replies) {
-                        // получили отправителя комента
-                        const user = await this.getUserFromIdOrName(replyMessage.senderId);
-                        if(user && !chek(user)) result.push(user);
-                    }
                 }
             }
         }
-    
-    
+
         return result;
     }
     /**
@@ -257,6 +262,6 @@ const test =()=> {
     // @nodejs_jobs, @stalkerappro
     (async ()=> {
         const test = await new BotInviterBase(testMobailNum).login();
-        console.log(await test.getAllUsersFromGroup('@react_js', 10))
+        //console.log(await test.getAllUsersFromGroup('@react_js', 10))
     })()
 }
