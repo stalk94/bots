@@ -37,20 +37,7 @@ async function checkProxy(proxy) {
         return false;
     }
 }
-// !?
-async function testWatcher(params) {
-    client.addEventHandler(async (event) => {
-        if (event instanceof NewMessage) {
-            const message = event.message;
 
-            // Проверяем, что это комментарий (находится в обсуждении)
-            if (message.isChannel && message.replyTo) {
-                console.log(`Комментарий от ${message.senderId}: ${message.text}`);
-                console.log(`Ответ на пост: ${message.replyTo.msgId}`);
-            }
-        }
-    });
-}
 
 
 class BotInviterBase {
@@ -96,6 +83,21 @@ class BotInviterBase {
     }
 
     /**
+     * Получить группу
+     * @param {string} groupName 
+     * @returns { Promise<Api.Channel | undefined> }
+     */
+    async getGroup(groupName) {
+        try {
+            const group = await this.client.getEntity(groupName);
+            return group;
+        } 
+        catch(error) {
+            console.error(`❌ Ошибка: ${groupName} - приватная группа или недоступна`);
+            return undefined;
+        }
+    }
+    /**
      * Найти и получить обьект юзера телеграм
      * @param {string | number} userIdOrName не важно с @ или без
      * @returns {Promise<Api.User|undefined>}
@@ -110,15 +112,15 @@ class BotInviterBase {
         }
     }
     /**
-     * получить все группы в которых пользователь не админ
+     * получить все группы в которых пользователь не админ (из списка чатов пользователя)
      */
-    async getAllGroups() {
+    async getGroupsFromUserAllDialogs() {
         const notMyGroups = [];
         const client = this.client;
         const me = await client.getMe();
         const dialogs = await client.getDialogs(); // Получаем все чаты, группы, каналы
     
-        // Фильтруем только группы
+        // Фильтруем из диалогов только группы и каналы
         const groups = dialogs.filter(dialog => dialog.isGroup || dialog.isChannel);
     
         for(let group of groups) {
@@ -155,7 +157,7 @@ class BotInviterBase {
                     notMyGroups.push({
                         id: groupId,
                         name: groupEntity.title || "Без названия",
-                        groupName: '@' + groupEntity.username
+                        groupName: groupEntity.username         //?
                     });
                 }
             }
@@ -168,13 +170,22 @@ class BotInviterBase {
     }
     /**
      * Получает всех юзеров с группы/канала
-     * @param {string | number} groopName не важно с @ или без
+     * @param {string | number} groupName не важно с @ или без
      * @param {number} limit
      * @returns {Promise<Api.User[]>} только уникальные 
      */
-    async getAllUsersFromGroup(groopName, limit=100) {
+    async getAllUsersFromGroup(groupName, limit=100) {
+        let group;
         const result = [];
-        const group = await this.client.getEntity(groopName);
+
+        try {
+            group = await this.client.getEntity(groupName);
+        } 
+        catch(error) {
+            console.error(`❌ Ошибка: ${groupName} - приватная группа или недоступна`);
+            return result; // Возвращаем пустой массив, чтобы избежать краша
+        }
+
         const messages = await this.client.getMessages(group, { limit: limit });
         
         const chek =(user)=> {
@@ -218,36 +229,34 @@ class BotInviterBase {
      * Добавляет в группу пользователя
      * @param {string} groopName 
      * @param {Api.User} user 
-     * @returns {this}
      */
-    async invite(groopName, user) {
+    async invite(groopName , user) {
         try {
-            const groop = await this.client.getEntity(groopName);
+            const group = await this.client.getEntity(groopName);
 
             //! надо заносить в список добавленых
             const invite = new Api.channels.InviteToChannel({
-                channel: groop,
-                users: [user.id]        //?
+                channel: group,
+                users: [user]        //?
             });
             
             await this.client.invoke(invite);
+            return true;
         }
         catch(error) {
             console.error('❌ Ошибка invite: ', error.message);
+            return false;
         }
-
-        return this;
     }
 }
 module.exports = BotInviterBase;
 
 
-/**
- * 
- // @nodejs_jobs, @stalkerappro
-(async ()=> {
-    const test = await new BotInviterBase(testMobailNum).login();
-    console.log(await test.getAllGroups())
-})()
-
-*/
+//////////////////////////////
+const test =()=> {
+    // @nodejs_jobs, @stalkerappro
+    (async ()=> {
+        const test = await new BotInviterBase(testMobailNum).login();
+        console.log(await test.getAllUsersFromGroup('@react_js', 10))
+    })()
+}
