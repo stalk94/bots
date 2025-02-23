@@ -5,6 +5,7 @@ const fs = require('fs');
 const { TelegramClient, Api } = require("telegram");
 const { StringSession } = require("telegram/sessions");
 const input = require("input");
+const { sleep } = require("telegram/Helpers");
 
 
 const apiId = +process.env.TG_API_ID;
@@ -230,6 +231,7 @@ class BotInviterBase {
 
         return result;
     }
+    
     /**
      * Добавляет в группу пользователя
      * @param {string} groopName 
@@ -238,19 +240,54 @@ class BotInviterBase {
     async invite(groopName , user) {
         try {
             const group = await this.client.getEntity(groopName);
-
-            //! надо заносить в список добавленых
             const invite = new Api.channels.InviteToChannel({
                 channel: group,
-                users: [user]        //?
+                users: [user]        
             });
             
             await this.client.invoke(invite);
             return true;
         }
         catch(error) {
-            console.error('❌ Ошибка invite: ', error.message);
-            return false;
+            const match = error.message.match(/A wait of (\d+) seconds is required/);
+
+            if(match) {
+                const waitTime = parseInt(match[1], 10);
+                console.log(`⏳ FloodWait: ждем ${waitTime} секунд...`);
+                
+                return { waitTime: waitTime * 1000 };
+            }
+            else {
+                console.error('❌ Ошибка invite: ', error.message);
+            }
+        }
+    }
+    async inviteLink(user, textInviteLink) {
+        const result = await this.client.invoke(
+            new Api.messages.ExportChatInvite({
+                peer: '@' + this.inviteGroup
+            })
+        );
+
+        try {
+            await this.client.sendMessage(user, {
+                message: `${textInviteLink ?? this.textInviteLink}: ${result.link}`
+            });
+
+            return true;
+        }
+        catch (error) {
+            const match = error.message.match(/A wait of (\d+) seconds is required/);
+
+            if(match) {
+                const waitTime = parseInt(match[1], 10);
+                console.log(`⏳ FloodWait: ждем ${waitTime} секунд...`);
+
+                return { waitTime: waitTime * 1000 };
+            }
+            else {
+                console.error("Ошибка invite link:", error);
+            }
         }
     }
 }
