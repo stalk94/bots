@@ -1,43 +1,15 @@
 require('dotenv').config();
-const axios = require('axios');
-const { SocksProxyAgent } = require('socks-proxy-agent');
 const fs = require('fs');
 const { TelegramClient, Api } = require("telegram");
 const { StringSession } = require("telegram/sessions");
 const input = require("input");
+const { checkProxy } = require('../function');
 const { sleep } = require("telegram/Helpers");
 
 
 const apiId = +process.env.TG_API_ID;
 const apiHash = process.env.TG_HASH;
 const testMobailNum = process.env.TEST_NUM;
-
-
-async function checkProxy(proxy) {
-    const agent = new SocksProxyAgent({
-        protocol: 'socks',
-        hostname: proxy.ip,
-        port: proxy.port,
-        socksType: proxy.socksType
-    });
-    
-    try {
-        const response = await axios.get('https://httpbin.org/ip', { httpsAgent: agent });
-
-        if(response.status === 200) {
-            console.log('✅ Прокси работает:', response.data?.origin);
-            return true;
-        } 
-        else {
-            console.warn('⚠️ Прокси не доступен.');
-            return false;
-        }
-    } 
-    catch(error) {
-        console.warn('⚠️ Прокси не доступен. Ошибка:', error.message);
-        return false;
-    }
-}
 
 
 

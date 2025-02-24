@@ -1,5 +1,5 @@
 const puppeteer = require('puppeteer');
-const { delay, getHashtags } = require('./function');
+const { delay, getHashtags } = require('../function');
 const fs = require('fs');
 const path = require('path');
 
@@ -128,8 +128,7 @@ async function typeTextWithHashtags(page, descriptionField, text) {
 
 /**
  * Рабочий ботяра загрузчик в тики таки видео с машинным описанием и спизженным видео
- * @param {string} videoPath путь на загрузку видео (удаленный)
- * @param {string} label копирайт на видео
+ * @param {*} resultMirror
  * @param {string} textGpt Описание для видео, от GPT
  * @param {(txt:string, error:any)=> void} caller регистратор
  */
