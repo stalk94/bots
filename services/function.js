@@ -1,7 +1,7 @@
 require('dotenv').config();
 const axios = require('axios');
 const fs = require('fs');
-const path = require('path');
+const { SocksProxyAgent } = require('socks-proxy-agent');
 const https = require('https');
 
 
@@ -121,4 +121,38 @@ exports.delay = async(ms)=> {
 }
 exports.getHashtags =(text)=> {
     return text.match(/#[\p{L}0-9_]+/gu) || [];
+<<<<<<< HEAD
+=======
+}
+
+/**
+ * Проверка работоспособности proxy SOCKS
+ * @param {{ip:string, port:number, socksType:number}} proxy 
+ * @returns 
+ */
+exports.checkProxy = async(proxy)=> {
+    const agent = new SocksProxyAgent({
+        protocol: 'socks',
+        hostname: proxy.ip,
+        port: proxy.port,
+        socksType: proxy.socksType
+    });
+    
+    try {
+        const response = await axios.get('https://httpbin.org/ip', { httpsAgent: agent });
+
+        if(response.status === 200) {
+            console.log('✅ Прокси работает:', response.data?.origin);
+            return true;
+        } 
+        else {
+            console.warn('⚠️ Прокси не доступен.');
+            return false;
+        }
+    } 
+    catch(error) {
+        console.warn('⚠️ Прокси не доступен. Ошибка:', error.message);
+        return false;
+    }
+>>>>>>> b58aa9aff08ced5da618255403655bd63bb383e7
 }

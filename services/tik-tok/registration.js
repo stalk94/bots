@@ -4,13 +4,11 @@ const { plugin } = require('puppeteer-with-fingerprints');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const { delay, getHashtags } = require('./function');
 const Mailjs = require("@cemalgnlts/mailjs");
-const axios = require('axios');
 const net = require("net");
 require('dotenv').config();
 
 //puppeteer.use(StealthPlugin());
 const device = require('puppeteer').KnownDevices['iPhone 15'];
-
 
 
 
@@ -43,27 +41,7 @@ async function getTempEmail() {
         getMessages: (clb)=> mailjs.getMessages().then(clb)
     }
 }
-async function getFreeProxy() {
-    try {
-        const res = await axios.get('https://www.sslproxies.org/');
-        const proxies = res.data.match(/\d+\.\d+\.\d+\.\d+:\d+/g); // Парсим IP:PORT
-        const randomProxy = proxies[Math.floor(Math.random() * proxies.length)];
-        return proxies.length ? randomProxy : null;
-    } 
-    catch(error) {
-        console.error('Ошибка получения прокси:', error);
-        return null;
-    }
-}
-async function captcha() {
-    const slider = await page.$('#captcha_slide_button');
-    const box = await slider.boundingBox();
-    const targetPosition = calculateCorrectPosition(box);  // Вычислить правильное положение
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(targetPosition.x, targetPosition.y, { steps: 20 });
-    await page.mouse.up();
-}
+
 
 
 /**
@@ -210,14 +188,12 @@ async function proces() {
         await delay(5000);
     }
 }
-
-
 async function procesMobail() {
     const browser = await puppeteer.launch({
         headless: false,  // Включаем видимый режим для дебага
         args: [
-            '--no-sandbox',  // Для избежания ошибок при запуске в некоторых средах
-            '--disable-blink-features=AutomationControlled',  // Избегаем автоматизации для предотвращения блокировки
+            '--no-sandbox',
+            '--disable-blink-features=AutomationControlled',
             '--proxy-server=socks5://127.0.0.1:9050',
             '--user-agent=NEW_USER_AGENT',
             '--enable-webgl',
@@ -225,8 +201,7 @@ async function procesMobail() {
         ],
     });
 
-    //const context = await browser.createBrowserContext();
-    await changeTorIP();
+    
     const page = await browser.newPage();
     await page.evaluateOnNewDocument(() => {
         const originalGetParameter = WebGLRenderingContext.prototype.getParameter; // Сохраняем оригинальный метод
@@ -345,5 +320,6 @@ async function procesMobail() {
         await delay(5000);
     }
 }
-//proces()
+
+
 procesMobail()

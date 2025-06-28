@@ -1,6 +1,6 @@
-const { scrapeVideo } = require('../services/scraper');
-const { botLoader, parseCockie } = require('../services/bot-loader');
-const { getChatGPTResponse } = require('../services/gpt');
+const { scrapeVideo } = require('../services/util/scraper');
+const { botLoader } = require('../services/tik-tok/bot-loader');
+const { getChatGPTResponse } = require('../services/util/gpt');
 const { isValidUrl, downloadFile } = require('../services/function');
 const TelegramBot = require('node-telegram-bot-api');
 const { miror } = require('../services/video-act');

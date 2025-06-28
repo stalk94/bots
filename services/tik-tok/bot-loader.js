@@ -1,5 +1,9 @@
 const puppeteer = require('puppeteer');
+<<<<<<< HEAD:services/bot-loader.js
 const { delay, getHashtags } = require('./function');
+=======
+const { delay, getHashtags } = require('../function');
+>>>>>>> b58aa9aff08ced5da618255403655bd63bb383e7:services/tik-tok/bot-loader.js
 const fs = require('fs');
 const path = require('path');
 
@@ -122,8 +126,7 @@ async function typeTextWithHashtags(page, descriptionField, text) {
 
 /**
  * Рабочий ботяра загрузчик в тики таки видео с машинным описанием и спизженным видео
- * @param {string} videoPath путь на загрузку видео (удаленный)
- * @param {string} label копирайт на видео
+ * @param {*} resultMirror
  * @param {string} textGpt Описание для видео, от GPT
  * @param {(txt:string, error:any)=> void} caller регистратор
  */
@@ -208,17 +211,18 @@ exports.botLoader = async function(resultMirror, textGpt, caller) {
                     document.querySelector('[data-e2e="post_video_button"]')
                         .scrollIntoView({ behavior: "smooth", block: "center" });
                 });
-                
 
                 // Нажимаем кнопку публикации
+                //await page.click('[data-e2e="post_video_button"]', { delay: 100 });
                 await page.evaluate(()=> {
                     document.querySelector('[data-e2e="post_video_button"]').click();
                 });
-                //await page.click('[data-e2e="post_video_button"]', { delay: 100 });
-                caller('🎉 Видео опубликовано. И обрабатывается tik-tok.(3 min bot panding)')
+
+                await page.waitForNavigation({ waitUntil: 'networkidle2' });
+                caller('🎉 Видео опубликовано. И обрабатывается tik-tok.');
 
                 // ? нужна логика для закрытия puppeter
-                setTimeout(()=> {browser?.close(); caller('🤖 Browser bot close');}, 3 * (60*1000));
+                setTimeout(()=> {browser?.close(); caller('🤖 Browser process bot close');}, 1 * (60*1000));
             } 
         } 
         catch (error) {

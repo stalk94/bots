@@ -1,5 +1,4 @@
 const ffmpeg = require('fluent-ffmpeg');
-const path = require('path');
 
 
 /**
@@ -86,7 +85,7 @@ async function miror(copyrightText, flick) {
             .videoFilters([
                 'hflip',                                            // Отзеркалить видео по горизонтали
                 'setpts=1.03*PTS',                                  // Ускорение видео на 3%
-                'fps=29.97',                                        // Изменение FPS
+                'fps=29',                                           // Изменение FPS
                 'noise=alls=10:allf=t+u',                           // Добавление шума
                 'eq=brightness=0.02:saturation=1.1:contrast=1.05',  // Лёгкая цветокоррекция
                 'crop=iw-10:ih-10,scale=iw:ih',                     // Обрезка и восстановление размера
@@ -109,7 +108,7 @@ async function miror(copyrightText, flick) {
             .run();
         });
 }
-//miror('test', false).then(console.log)
+
 
 
 module.exports = {
