@@ -20,8 +20,10 @@
     "vite": "^6.0.11"
   },
   "dependencies": {
-    "better-sqlite3": "^9.4.1",
+    "@cemalgnlts/mailjs": "^3.0.1",
+    "@techstark/opencv-js": "^4.10.0-release.1",
     "axios": "^1.7.9",
+    "better-sqlite3": "^9.4.1",
     "cors": "^2.8.5",
     "cross-fetch": "^4.1.0",
     "dotenv": "^16.4.2",
@@ -34,6 +36,9 @@
     "npm": "^11.1.0",
     "prettyjson": "^1.2.5",
     "puppeteer": "^24.1.1",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "puppeteer-with-fingerprints": "^2.0.6",
     "quick.db": "^9.1.7",
     "rahad-all-downloader": "^2.1.18"
   }

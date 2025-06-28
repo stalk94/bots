@@ -64,13 +64,24 @@ module.exports =(token)=> {
                 resultScrape: resultScrape
             });
         }
-        else registrator('❌ Не верный формат ссылки');
+        else {
+            registrator('❌ Не верный формат ссылки');
+        }
     });
 
 
     bot.onText(/\/start/, (msg) => {
         const chatId = msg.chat.id;
         bot.sendMessage(chatId, 'Жду ссылку!');
+    });
+    bot.onText(/\/play/, (msg) => {
+        bot.sendMessage(msg.chat.id, 'Нажми "Играть", чтобы запустить игру!', {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: '🎮 Играть', web_app: { url: 'https://last-exit.su' } }],
+                ],
+            },
+        });
     });
 
     return bot;

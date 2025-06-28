@@ -2,6 +2,7 @@ import React from 'react';
 import { send } from "./func";
 import { createRoot } from 'react-dom/client';
 import ConsoleComponent from "./console";
+import CanvasEditor from "./canvas-editor";
 import "./style.css";
 
 type StateConfig = {
@@ -19,7 +20,7 @@ function App() {
     const [config, setConfig] = React.useState<StateConfig>({});
 
     React.useEffect(()=> {
-        send('getConfig', {}, 'GET')
+        if(false) send('getConfig', {}, 'GET')
             .then(setConfig)
             .catch(console.error);
     }, []);
@@ -28,7 +29,7 @@ function App() {
     return(
         <React.Fragment>
             <section className='WorkArea'>
-
+                <CanvasEditor />
             </section>
             <ConsoleComponent />
         </React.Fragment>

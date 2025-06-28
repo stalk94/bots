@@ -67,9 +67,9 @@ async function miror(copyrightText, flick) {
             fontcolor: 'red',
             x: '(w-text_w)/2',          // По центру по горизонтали
             y: 30,                      // Расположить текст вверху
-            box: 1,                     // Включить фон
-            boxcolor: 'black@0.05',      // Черный фон с прозрачностью (0.7)
-            boxborderw: 7              // Толщина границы фона
+            //box: 1,                     // Включить фон
+            //boxcolor: 'black@0.05',      // Черный фон с прозрачностью (0.7)
+            //boxborderw: 7              // Толщина границы фона
         }
     }
     if(flick) filter.enable = 'lt(mod(t,2),1)';
@@ -92,6 +92,11 @@ async function miror(copyrightText, flick) {
                 'crop=iw-10:ih-10,scale=iw:ih',                     // Обрезка и восстановление размера
                 filter
             ])
+            .audioFilters([
+                'asetrate=44100*0.98,atempo=1.03',                  // Смена темпа без искажения голоса
+                'afftdn=nr=20',                                     // Легкий шумодав
+                'adelay=500|500'                                    // Сдвиг звука
+            ])
             .output(pathOut)
             .on('end', ()=> {
                 console.log('Процесс обработки видео завершен');
@@ -104,7 +109,7 @@ async function miror(copyrightText, flick) {
             .run();
         });
 }
-miror('test', false).then(console.log)
+//miror('test', false).then(console.log)
 
 
 module.exports = {

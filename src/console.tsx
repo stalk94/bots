@@ -50,7 +50,7 @@ export default function() {
     }
     
     React.useEffect(()=> {
-        setInterval(()=> {
+        if(false) setInterval(()=> {
              send('chek', {}, 'POST')
                 .then((data)=> {
                     if(data.sys) {

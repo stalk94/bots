@@ -1,5 +1,5 @@
 const puppeteer = require('puppeteer');
-const { delay } = require('./function');
+const { delay, getHashtags } = require('./function');
 const fs = require('fs');
 const path = require('path');
 
@@ -70,6 +70,54 @@ exports.parseCockie = async function() {
         console.error('authorize error');
     }
 }
+async function typeTextWithHashtags(page, descriptionField, text) { 
+    const hashtags = getHashtags(text);  // Получаем все хештеги из текста
+    let position = 0;
+
+    for(let hashtag of hashtags) {
+        const hashtagIndex = text.indexOf(hashtag, position); // Ищем хештег в тексте с текущей позиции
+
+        // Вставляем текст перед хештегом
+        if(hashtagIndex > position) {
+            await descriptionField.type(text.slice(position, hashtagIndex), { delay: 40 });
+        }
+
+        // Вставляем сам хештег
+        await descriptionField.type(hashtag, { delay: 40 });
+
+        // Ждем, пока появится выпадающий список
+        try {
+            await page.waitForSelector('.hashtag-suggestion-item', { visible: true, timeout: 2000 });
+            console.log('Hash tag suggestion visible');
+
+            // Выбираем первый хештег из выпадающего списка
+            const firstHashtag = await page.$('.hashtag-suggestion-item');
+            if(firstHashtag) {
+                await firstHashtag.click();
+                await delay(400);
+            }
+        } 
+        catch(error) {
+            console.warn(`Не удалось выбрать хештег ${hashtag}: ${error.message}`);
+        }
+
+        // Обновляем позицию для следующего хештега
+        position = hashtagIndex + hashtag.length;
+
+        // Добавляем пробел после хештега (если в тексте он был)
+        if(text[position] === ' ') {
+            await descriptionField.type(' ', { delay: 40 });
+            position++;
+        }
+
+        await delay(200);  // Небольшая задержка перед следующим хештегом
+    }
+
+    // Вставляем оставшийся текст после последнего хештега
+    if (position < text.length) {
+        await descriptionField.type(text.slice(position), { delay: 40 });
+    }
+}
 
 
 /**
@@ -98,8 +146,8 @@ exports.botLoader = async function(resultMirror, textGpt, caller) {
             const page = await browser.newPage();
             await page.setViewport({ width: 1280, height: 720 });
             await page.setExtraHTTPHeaders({'Accept-Language': 'ru-RU,ru;q=0.9'});
-            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-
+            //await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+            
             // Переходим на страницу загрузки видео
             await page.goto('https://www.tiktok.com/upload', { waitUntil: 'networkidle2' });
 
@@ -144,15 +192,16 @@ exports.botLoader = async function(resultMirror, textGpt, caller) {
                 await page.keyboard.press('A');             // Выделяем весь текст
                 await delay(200);
                 await page.keyboard.press('Backspace');     // Удаляем выделенный текст
+                await delay(100);
                 await page.keyboard.press('Backspace');
-                await page.keyboard.press('Backspace');
-                await page.keyboard.press('Backspace');
-                await delay(200);
-                await descriptionField.type(textGpt, { delay: 40 }); 
+                await delay(100);
+                await typeTextWithHashtags(page, descriptionField, textGpt.replace(/"/g, ''));
 
-                // Ожидаем прогресса загрузки (!ебаный тик ток может поменять селекторы)
-                await page.waitForSelector('.info-status-item.success-info', { visible: true });
-
+                await Promise.race([
+                    page.waitForSelector('.info-status.success', { visible: true }),
+                    page.waitForSelector('.info-status-item.success-info', { visible: true })
+                ]);
+                
                 // Ожидаем кнопку для публикации
                 await page.waitForSelector('[data-e2e="post_video_button"]', {visible: true});
                 await page.evaluate(()=> {
@@ -190,6 +239,8 @@ exports.botLoader = async function(resultMirror, textGpt, caller) {
         await browser?.close();
     }
 }
+
+
 /**
  * Получает все url видео аккаунта username tik-tok
  * @param {string} username 

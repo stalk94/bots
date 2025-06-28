@@ -14,3 +14,15 @@ export async function send(url: string, data: any, metod: 'GET'|'POST') {
     return request.json();
 }
 
+/**
+ * Вычисляет размеры элемента
+ * @param {string} selector
+ * @returns {height:number, width:number}
+ */
+export function getSizeElement(selector: string) {
+    const container = document.querySelector(selector);
+    return {
+        height: container.clientHeight, 
+        width: container.clientWidth
+    }
+}
